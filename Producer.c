@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define MUL_SIZE 1000000
+#define MUL_SIZE 250000
 #define ReadEnd  0
 #define WriteEnd 1
 
@@ -43,8 +43,8 @@ int main (int argc, char *argv[])
 			correct_input = false;
 		}
 	}
+	
 	gettimeofday(&t_start, NULL);
-
 	pid_t pid = fork();
 
 	if (pid < 0) // error in fork()
@@ -55,10 +55,11 @@ int main (int argc, char *argv[])
 	if (pid > 0) //I'm in the parent process
 	{
 		array_size = size * MUL_SIZE;
-		char data_array[array_size];
+		int data_array[array_size];
 		for (int i=0; i < array_size; i++)
 		{
-			data_array[i] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[random () % 26];
+			//data_array[i] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[random () % 26];
+			data_array[i] = rand();
 		}
 		
 		printf("Culo");
@@ -84,12 +85,12 @@ int main (int argc, char *argv[])
 		printf("Culo3");
 		fflush(stdout);
 		close(fd_unnamed[WriteEnd]);
-		char rd_data_array[array_size];
+		int rd_data_array[array_size];
 		
 		for (int i = 0; i < array_size; i++){
 			read(fd_unnamed[ReadEnd], &rd_data_array[i], sizeof(rd_data_array[i]));
-			//printf("%c",rd_data_array[i]);
-			//fflush(stdout);
+			printf("%d",rd_data_array[i]);
+			fflush(stdout);
 		}
 		gettimeofday(&t_end, NULL);
 		close(fd_unnamed[ReadEnd]);
