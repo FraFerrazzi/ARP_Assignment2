@@ -44,13 +44,15 @@ int main (int argc, char *argv[])
 		}
 	}
 	gettimeofday(&t_start, NULL);
+
 	pid_t pid = fork();
+
 	if (pid < 0) // error in fork()
 	{
-		report_and_exit("fork");       
+		report_and_exit("fork");
 	}	
-	
-	if (pid == 0) //I'm in the child process
+
+	if (pid > 0) //I'm in the parent process
 	{
 		array_size = size * MUL_SIZE;
 		char data_array[array_size];
@@ -69,21 +71,16 @@ int main (int argc, char *argv[])
 		}
 		printf("Culo1");
 		fflush(stdout);
-		close (fd_unnamed[WriteEnd]);
-	
+
+		int status;
+		pid_t terminated;
+		terminated = waitpid(pid, &status, 0);
+		if (terminated == -1) {
+		report_and_exit("waitpid()");
 	}
-	
-	else //I'm in the parent process
+	}
+	if(pid == 0)//I'm in the child process
 	{
-		
-		//int status;
-		//pid_t terminated;
-		//terminated = waitpid(pid, &status, 0);
-		printf("Culo2");
-		fflush(stdout);
-        //if (terminated == -1) {
-        //    report_and_exit("waitpid()");
-        //}
 		printf("Culo3");
 		fflush(stdout);
 		close(fd_unnamed[WriteEnd]);
@@ -91,17 +88,15 @@ int main (int argc, char *argv[])
 		
 		for (int i = 0; i < array_size; i++){
 			read(fd_unnamed[ReadEnd], &rd_data_array[i], sizeof(rd_data_array[i]));
-			printf("%c",rd_data_array[i]);
-			fflush(stdout);
+			//printf("%c",rd_data_array[i]);
+			//fflush(stdout);
 		}
 		gettimeofday(&t_end, NULL);
-		double time_taken = (t_end.tv_sec*1000000 + t_end.tv_usec) - (t_start.tv_sec*1000000 + t_start.tv_usec);
-		printf("\nTime taken for transferring data = %f usec\n", time_taken);
-		fflush(stdout);
 		close(fd_unnamed[ReadEnd]);
 	}
-	int status;
-	pid_t terminated;
-	terminated = waitpid(pid, &status, 0);
+	double time_taken = (t_end.tv_sec*1000000 + t_end.tv_usec) - (t_start.tv_sec*1000000 + t_start.tv_usec);
+	printf("\nTime taken for transferring data = %f usec\n", time_taken);
+	fflush(stdout);
+	
 	return 0;
 }
