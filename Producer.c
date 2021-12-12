@@ -13,16 +13,11 @@
 #define ReadEnd  0
 #define WriteEnd 1
 
-
-/*
-Function that handles possible errors 
-*/
 void report_and_exit(const char* msg) 
 {
   perror(msg);
   exit(-1);    /** failure **/
 }
-
 
 int main (int argc, char *argv[]) 
 {
@@ -32,8 +27,7 @@ int main (int argc, char *argv[])
 	{
 		report_and_exit("fd_unnamed");
 	}
-	int size, status;
-	pid_t terminated;
+	int size, array_size;
 	bool correct_input = true;
 	while(correct_input)
 	{
@@ -49,7 +43,8 @@ int main (int argc, char *argv[])
 			correct_input = false;
 		}
 	}
-	int array_size = MUL_SIZE * size;
+	
+	gettimeofday(&t_start, NULL);
 	pid_t pid = fork();
 
 	if (pid < 0) // error in fork()
@@ -59,34 +54,32 @@ int main (int argc, char *argv[])
 
 	if (pid > 0) //I'm in the parent process
 	{
-		// initialize the array that will contain a MB of random data
-		int data_array[MUL_SIZE];
-		for (int i=0; i < MUL_SIZE; i++)
+		array_size = size * MUL_SIZE;
+		int data_array[array_size];
+		for (int i=0; i < array_size; i++)
 		{
 			data_array[i] = rand();
 		}
-	
+		
 		printf("Culo");
 		fflush(stdout);
+		
 		close(fd_unnamed[ReadEnd]); 
-		gettimeofday(&t_start, NULL);
-		for (int i=0; i < size; i++)
+		for (int i=0; i < array_size; i++)
 		{
-			for (int j=0; j < MUL_SIZE; j++)
-			{
-				write(fd_unnamed[WriteEnd], &data_array[i], sizeof(data_array[i]));
-			}
+			write(fd_unnamed[WriteEnd], &data_array[i], sizeof(data_array[i]));
 		}
-		printf("Culo1");
-		fflush(stdout);
-
+		
+		int status;
+		pid_t terminated;
 		terminated = waitpid(pid, &status, 0);
-		if (terminated == -1) 
-		{
+		if (terminated == -1) {
 		report_and_exit("waitpid()");
 		}
+		close(fd_unnamed[WriteEnd]);
+		printf("Culo1");
+		fflush(stdout);
 	}
-	
 	if(pid == 0)//I'm in the child process
 	{
 		printf("Culo3");
@@ -96,16 +89,15 @@ int main (int argc, char *argv[])
 		
 		for (int i = 0; i < array_size; i++){
 			read(fd_unnamed[ReadEnd], &rd_data_array[i], sizeof(rd_data_array[i]));
-			
+			//printf("%d",rd_data_array[i]);
+			//fflush(stdout);
 		}
-		printf("Culo2");
-		fflush(stdout);
 		gettimeofday(&t_end, NULL);
 		close(fd_unnamed[ReadEnd]);
-		double time_taken = (t_end.tv_sec * 1000000 + t_end.tv_usec) - (t_start.tv_sec * 1000000 + t_start.tv_usec);
-		printf("\nTime taken for transferring data = %f sec\n", time_taken);
-		fflush(stdout);
-	
 	}
+	double time_taken = (t_end.tv_sec*1000000 + t_end.tv_usec) - (t_start.tv_sec*1000000 + t_start.tv_usec);
+	printf("\nTime taken for transferring data = %f usec\n", time_taken);
+	fflush(stdout);
+	
 	return 0;
 }
