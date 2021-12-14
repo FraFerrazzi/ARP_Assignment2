@@ -45,14 +45,22 @@ int main()
     // getting PID of producer for signal handling
     int pidProducer = getpid();
     char buf_pidProducer[20];
-    sprintf(buf_pidProducer, "%c", pidProducer);
+    sprintf(buf_pidProducer, "%d", pidProducer);
 
     // initialize time struct to get the time of data transfer
 	struct timeval t_start, t_end;
     // initialize client PID 
     int pidClient;
 
+    // create the array that will contain one MB of random data
+	int data_array[MUL_SIZE];
+	for (int i=0; i < MUL_SIZE; i++)
+	{
+		data_array[i] = rand();
+	}
+
     // getting input from user
+    // this is done to define how many MB of data are going to be transferred
     char buf_size[20];
     int size;
     bool correct_input = true;
@@ -71,9 +79,7 @@ int main()
 			correct_input = false;
 		}
 	}
-    sprintf(buf_size, "%c", size);
-    printf("Culo");
-    fflush(stdout);
+    sprintf(buf_size, "%d", size);
 
     // defining a pipe for interprocess communication
     char* f_client = "/tmp/f_client";
@@ -90,17 +96,6 @@ int main()
     // passing to client the pid of the producer and the size given as input from user
     char * arg_list_client [] = { "./ClientNamedPipe", buf_pidProducer, buf_size, (char*)NULL };
     pidClient = spawn("./ClientNamedPipe", arg_list_client); 
-    printf("Culo0");
-    fflush(stdout);
-
-    // initialize the array that will contain a MB of random data
-	int data_array[MUL_SIZE];
-	for (int i=0; i < MUL_SIZE; i++)
-	{
-		data_array[i] = rand();
-	}
-    printf("Culo10");
-    fflush(stdout);
 
     // open the pipe
     int fd_client;	
@@ -110,8 +105,6 @@ int main()
         perror("fd_client");
         return -1;
     }
-    printf("Culo11");
-    fflush(stdout);
 
     // getting time before writing
     gettimeofday(&t_start, NULL);
@@ -124,8 +117,6 @@ int main()
 		}
 	}
     close(fd_client);
-    printf("Culo1");
-    fflush(stdout);
 
     int counter = 0;
     bool not_received = true;
@@ -135,8 +126,6 @@ int main()
         {
             gettimeofday(&t_end, NULL);
             not_received = false;
-            printf("Culo2");
-            fflush(stdout);
         }
         else
         {

@@ -26,14 +26,12 @@ int main(int argc, char *argv[])
 
     // open the pipe
     int fd_client;	
-    fd_client = open(f_client, O_WRONLY);
+    fd_client = open(f_client, O_RDONLY);
 	if (fd_client < 0) 
 	{
         perror("fd_client");
         return -1;
     }
-    printf("Culo4");
-    fflush(stdout);
 
     for (int i = 0; i < size; i++)
 	{
@@ -43,8 +41,6 @@ int main(int argc, char *argv[])
 		}
 	}
     close(fd_client);
-    printf("Culo5");
-    fflush(stdout);
     // send signal to Producer
     kill(pidProducer, SIGINT);
     
