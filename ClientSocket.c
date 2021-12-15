@@ -8,6 +8,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define MUL_SIZE 250000
+
 void error(char *msg)
 {
     perror(msg);
@@ -16,18 +18,21 @@ void error(char *msg)
 
 int main(int argc, char *argv[])
 {
+    char *ip = "127.0.0.1";
     int sockfd, portno, n;
 
     struct sockaddr_in serv_addr;
     struct hostent *server;
-
-    char buffer[256];
+    // if there are not enough arguments, error
+    char data_array[MUL_SIZE];
     if (argc < 3) 
     {
        fprintf(stderr,"usage %s hostname port\n", argv[0]);
        exit(0);
     }
+    // getting port number as argument given sent by server
     portno = atoi(argv[2]);
+    // creating an unbound socket in a communication domain
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) 
     {
@@ -39,6 +44,7 @@ int main(int argc, char *argv[])
         fprintf(stderr,"ERROR, no such host\n");
         exit(0);
     }
+    // bzero function is used to set all the socket structures with null values
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     bcopy((char *)server->h_addr,(char *)&serv_addr.sin_addr.s_addr, server->h_length);
