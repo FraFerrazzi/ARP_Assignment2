@@ -30,8 +30,8 @@ int spawn(const char * program, char ** arg_list)
 }
 
 // signal handler for signals from client
-// this is done to receive a signal from client to get the time in which the
-// child finished reading the data
+// this is done to receive a signal from client as soon as the child
+// finishes reading the data
 void sig_handler(int signo)
 {
     if(signo == SIGINT)
@@ -118,13 +118,14 @@ int main()
 	}
     close(fd_client);
 
+    // until the signal is not received means that client is still reading
     int counter = 0;
     bool not_received = true;
     while(not_received)
     {
-        if (arrived == 'a')
+        if (arrived == 'a') // when signal arrives enter the loop
         {
-            gettimeofday(&t_end, NULL);
+            gettimeofday(&t_end, NULL); // get time when client finishes reading
             not_received = false;
         }
         else
@@ -132,6 +133,7 @@ int main()
             counter++;
         }
     }
+    // calculate the time it took to write and read data
     double time_taken = ((double)t_end.tv_sec + (double)t_end.tv_usec/1000000) - ((double)t_start.tv_sec + (double)t_start.tv_usec/1000000);
 	printf("\nTime taken for transferring data with named pipe = %f sec\n\n", time_taken);
 	fflush(stdout);

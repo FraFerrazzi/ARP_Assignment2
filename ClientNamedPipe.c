@@ -13,12 +13,18 @@
 
 int main(int argc, char *argv[])
 {
-    // controllo sul fatto che arrivino gli argomenti
+    // if there are not enough arguments, error
+    if (argc < 3) 
+    {
+       fprintf(stderr,"Not all arguments were received by client");
+       exit(0);
+    }
 
     // getting arguments of PID and size from Producer
     int pidProducer = atoi(argv[1]);
     int size = atoi(argv[2]);
 
+    // initialize array to store random data
     int rd_data_array[MUL_SIZE];
 
      // defining a pipe for interprocess communication
@@ -33,6 +39,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    // read all the data produced
     for (int i = 0; i < size; i++)
 	{
 		for (int j=0; j < MUL_SIZE; j++)
