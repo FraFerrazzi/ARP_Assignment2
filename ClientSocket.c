@@ -13,6 +13,7 @@
 #include <arpa/inet.h>
 
 #define MUL_SIZE 250000
+#define PORT 8080
 char arrived;
 
 void error(char *msg)
@@ -32,30 +33,16 @@ void sig_handler(int signo)
 
 int main(int argc, char *argv[])
 {
+    signal(SIGINT, sig_handler);
     char *ip = "127.0.0.1";
-    int sockfd, portno, n, pidClient;
+    int sockfd, n, pidClient, size;
     struct sockaddr_in serv_addr;
     struct hostent *server;
     int data_array[MUL_SIZE];
     char bufPidClient[20];
+    char bufSize[20];
     // initialize time struct to get the time of data transfer
 	struct timeval t_start, t_end;
-
-    // getting client PID
-    pidClient = getpid();
-    sprintf(bufPidClient, "%d", pidClient);
-    
-    // if there are not enough arguments, error
-    if (argc < 2) 
-    {
-       fprintf(stderr,"usage %s hostname port\n", argv[0]);
-       exit(0);
-    }
-    
-    // getting port number as argument given by server
-    portno = atoi(argv[1]);
-    printf("%d portno", portno);
-    fflush(stdout);
 
     // creating an unbound socket in a communication domain
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -74,26 +61,24 @@ int main(int argc, char *argv[])
     // bzero function is used to set all the socket structures with null values
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr,(char *)&serv_addr.sin_addr.s_addr, server->h_length);
-    serv_addr.sin_port = htons(portno);
+    //bcopy((char *)server->h_addr,(char *)&serv_addr.sin_addr.s_addr, server->h_length);
+    serv_addr.sin_addr.s_addr = inet_addr(ip);
+    serv_addr.sin_port = htons(PORT);
     // connecting to server
     if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) 
     {
         error("ERROR connecting");
     }
-    
-    // create the array that will contain one MB of random data
-	for (int i=0; i < MUL_SIZE; i++)
-	{
-		data_array[i] = rand();
-	}
 
-    bzero(data_array,MUL_SIZE);
+    bzero(bufPidClient, sizeof(bufPidClient));
+    // getting client PID
+    pidClient = getpid();
+    sprintf(bufPidClient, "%d", pidClient);
+    write(sockfd, bufPidClient, sizeof(bufPidClient));
     
+    bzero(bufSize, sizeof(bufSize));
     // getting input from user
     // this is done to define how many MB of data are going to be transferred
-    char buf_size[20];
-    int size;
     bool correct_input = true;
     while(correct_input)
 	{
@@ -110,10 +95,15 @@ int main(int argc, char *argv[])
 			correct_input = false;
 		}
 	}
-    sprintf(buf_size, "%d", size);
-    // define arg list to send the size given by user to the server
-    char *arglist[] = {"./ServerSocket", buf_size, bufPidClient, (char*)NULL};
+    sprintf(bufSize, "%d", size);
+    write(sockfd, bufSize, sizeof(bufSize));
     
+    bzero(data_array,MUL_SIZE);
+    // create the array that will contain one MB of random data
+	for (int i=0; i < MUL_SIZE; i++)
+	{
+		data_array[i] = rand();
+	}
     // getting time before writing
     gettimeofday(&t_start, NULL);
     // write data from client to server
@@ -134,6 +124,7 @@ int main(int argc, char *argv[])
         {
             gettimeofday(&t_end, NULL); // get time when client finishes reading
             not_received = false;
+
         }
         else
         {

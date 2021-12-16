@@ -12,7 +12,7 @@
 #include <netdb.h> 
 #include <arpa/inet.h>
 
-
+#define PORT 8080
 #define MUL_SIZE 250000
 
 void error(char *msg)
@@ -23,9 +23,10 @@ void error(char *msg)
 
 int main(int argc, char *argv[])
 {
-    char *ip = "127.0.0.1";
-    int sockfd, newsockfd, portno, clilen, pidClient, size;
-    char bufPortNo[20];
+    //char *ip = "127.0.0.1";
+    int sockfd, newsockfd, clilen, pidClient, size;
+    char bufPidClient[20];
+    char bufSize[20];
     struct sockaddr_in serv_addr, cli_addr;
     int n;
     
@@ -36,20 +37,12 @@ int main(int argc, char *argv[])
         error("ERROR opening socket");
     }
 
-    // asking user the value for port number
-    printf("Write the port number: ");
-    fflush(stdout);
-    scanf("%d", &portno);
-    sprintf(bufPortNo, "%d", portno);
-    // define arg list to send the PID of server and i the port number to Client
-    char *arglist[] = {"./ClientSocket", bufPortNo, (char*)NULL};
-    
     // bzero function is used to set all the socket structures with null values
     bzero((char *) &serv_addr, sizeof(serv_addr));
     // store server address and port number in a string variable
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = inet_addr(ip); //INADDR_ANY if doesn't work
-    serv_addr.sin_port = htons(portno);
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); //INADDR_ANY doesn't work use ip
+    serv_addr.sin_port = htons(PORT);
     // assigning a local address to a socket
     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) 
     {
@@ -68,13 +61,15 @@ int main(int argc, char *argv[])
     { 
         error("ERROR on accept");
     }
-    // getting size from Server's arg list
-    size = atoi(argv[1]);
-    // getting PID client
-    pidClient = atoi(argv[2]);
-    printf("PID: %d", pidClient);
-    printf("size: %d", size);
-    fflush(stdout);
+
+    bzero(bufPidClient, sizeof(bufPidClient));
+    // getting size from client
+    read(newsockfd, bufPidClient, sizeof(bufPidClient));
+    pidClient = atoi(bufPidClient);
+    bzero(bufSize, sizeof(bufSize));
+    // getting client PID 
+    read(newsockfd, bufSize, sizeof(bufSize));
+    size = atoi(bufSize);
 
     // initialize array to store random data
     int rd_data_array[MUL_SIZE];
@@ -87,7 +82,9 @@ int main(int argc, char *argv[])
 			read(newsockfd, &rd_data_array[j], sizeof(rd_data_array[j]));
 		}
 	}
-
     // send signal to Producer
     kill(pidClient, SIGINT);
+
+    // After reading the whole data close the socket
+    close(sockfd);
 }
