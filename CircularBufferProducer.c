@@ -17,7 +17,9 @@
 #define SHMOBJ_PATH "/shm_AOS"
 #define SEM_PATH_1 "/sem_AOS_1"
 #define SEM_PATH_2 "/sem_AOS_2"
-#define MUL_SIZE 250000
+#define SEM_PATH_3 "/sem_AOS_3"
+#define MUL_SIZE 500
+#define CBUFF_SIZE 500
 
 int data_array[MUL_SIZE];
 char arrived;
@@ -37,6 +39,11 @@ struct shared_data
     int var2;
 };
 
+/*struct circular_buffer
+{
+    int cir_buffer[CBUFF_SIZE];
+};*/
+
 int main(int argc, char *argv[]) 
 {
     // initialize time struct to get the time of data transfer
@@ -45,16 +52,21 @@ int main(int argc, char *argv[])
     signal(SIGINT, sig_handler);
     // defining shared memory and semaphores
     int shared_seg_size = (sizeof(struct shared_data));
+    //int cbuff_seg_size = (sizeof(struct circular_buffer));
     int shmfd = shm_open(SHMOBJ_PATH, O_CREAT | O_RDWR, 0666);
     ftruncate(shmfd, shared_seg_size);
+    //ftruncate(shmfd, cbuff_seg_size);
     struct shared_data * shared_msg = (struct shared_data *)
+    //struct circular_buffer * circular_msg = (struct circular_buffer *)
     mmap(NULL, shared_seg_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd, 0);
     sem_t * sem_id1= sem_open(SEM_PATH_1, O_CREAT | O_RDWR, 0666, 1);
     sem_t * sem_id2= sem_open(SEM_PATH_2, O_CREAT | O_RDWR, 0666, 1);
+    sem_t * sem_id3= sem_open(SEM_PATH_3, O_CREAT | O_RDWR, 0666, 1);
     sem_init(sem_id1, 1, 1); // initialized to 1
-    sem_init(sem_id2, 1, 0); // initialized to 0
+    sem_init(sem_id2, 1, CBUFF_SIZE); // initialized to dimension of circular buffer 
+    sem_init(sem_id3, 1, 0); // initialized to zero 
 
-    // put data into shmem
+    // create 1MB random data
     int data_array[MUL_SIZE];
 	for (int i=0; i < MUL_SIZE; i++)
 	{
@@ -82,26 +94,37 @@ int main(int argc, char *argv[])
 	}
     // get producer PID
     int producerPid = getpid();
+    printf("PID: %d", producerPid);
+    fflush(stdout);
     struct shared_data info_prod = { producerPid, size};
     // wait cli
     sem_wait(sem_id1);
     // send PID and size to client
     memcpy(shared_msg, &info_prod, sizeof(struct shared_data));
     // start cli
-    sem_post(sem_id2);
+    sem_post(sem_id3);
 
     // getting time before writing
     gettimeofday(&t_start, NULL);
+    //initializing a buffer msg
+    int circular_buffer[CBUFF_SIZE];
     // write data from producer to client 
     for (int i=0; i < size; i++)
 	{
 		for (int j=0; j < MUL_SIZE; j++)
 		{
-            // wait cli
-            sem_wait(sem_id1);
-			memcpy(shared_msg, &data_array[j], sizeof(data_array[j]));
-            // start cli
-            sem_post(sem_id2);
+            for(int k = 0; k < CBUFF_SIZE; k++)
+            {
+                //wait until array is full
+                sem_wait(sem_id2);
+                // wait cli
+                sem_wait(sem_id1);
+                memcpy(&circular_buffer[k], &data_array[j], sizeof(data_array[j]));
+                // start cli
+                sem_post(sem_id1);
+                //increment until array is full
+                sem_post(sem_id3);
+            }
 		}
 	}
     

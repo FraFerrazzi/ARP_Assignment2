@@ -16,10 +16,11 @@
 #define SHMOBJ_PATH "/shm_AOS"
 #define SEM_PATH_1 "/sem_AOS_1"
 #define SEM_PATH_2 "/sem_AOS_2"
-#define MUL_SIZE 250000
+#define SEM_PATH_3 "/sem_AOS_3"
+#define MUL_SIZE 500
+#define CBUFF_SIZE 500
 
-
-int data_array[MUL_SIZE];
+int rd_data_array[MUL_SIZE];
 
 struct shared_data 
 {
@@ -38,8 +39,9 @@ int main(int argc, char *argv[])
     struct shared_data info_prod_in;
     sem_t * sem_id1 = sem_open(SEM_PATH_1, 0);
     sem_t * sem_id2 = sem_open(SEM_PATH_2, 0);
+    sem_t * sem_id3 = sem_open(SEM_PATH_3, 0);
     // wait prod
-    sem_wait(sem_id2);
+    sem_wait(sem_id3);
     // receive PID and size to client
     memcpy(&info_prod_in, shared_msg, sizeof(struct shared_data));
     // start prod
@@ -49,16 +51,25 @@ int main(int argc, char *argv[])
     int size = info_prod_in.var2;
     printf("PID: %d\nsize: %d", pidProducer, size);
     fflush(stdout);
-
+    //initialize circular buffer
+    int circular_buffer[CBUFF_SIZE];
+    //reading from shm
     for (int i=0; i < size; i++)
 	{
 		for (int j=0; j < MUL_SIZE; j++)
 		{
-            // wait prod
-            sem_wait(sem_id2);
-			memcpy(&data_array[j], shared_msg, sizeof(data_array[j]));
-            // start prod
-            sem_post(sem_id1);
+            for(int k = 0; k < CBUFF_SIZE; k++)
+            {
+                // wait until array is empty 
+                sem_wait(sem_id3);
+                // wait producer
+                sem_wait(sem_id1);
+                memcpy(&rd_data_array[j], &circular_buffer[k], sizeof(rd_data_array[j]));
+                // start prod
+                sem_post(sem_id1);
+                // increment until array is empty 
+                sem_post(sem_id2);
+            }
 		}
 	}
     // send signal to Producer
@@ -72,4 +83,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
