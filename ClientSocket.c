@@ -15,6 +15,8 @@
 #define MUL_SIZE 250000
 #define PORT 8080
 char arrived;
+#define LOWER 0
+#define UPPER 9
 
 void error(char *msg)
 {
@@ -102,7 +104,7 @@ int main(int argc, char *argv[])
     // create the array that will contain one MB of random data
 	for (int i=0; i < MUL_SIZE; i++)
 	{
-		data_array[i] = rand();
+		data_array[i] = (rand() % (UPPER - LOWER + 1)) + LOWER;
 	}
     // getting time before writing
     gettimeofday(&t_start, NULL);
@@ -133,7 +135,7 @@ int main(int argc, char *argv[])
     }
     // calculate the time it took to write and read data
     double time_taken = ((double)t_end.tv_sec + (double)t_end.tv_usec/1000000) - ((double)t_start.tv_sec + (double)t_start.tv_usec/1000000);
-	printf("\nTime taken for transferring data with named pipe = %f sec\n\n", time_taken);
+	printf("\nTime taken for transferring data with socket = %f sec\n\n", time_taken);
 	fflush(stdout);
     return 0;
 }

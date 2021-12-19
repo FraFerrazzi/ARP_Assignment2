@@ -11,7 +11,6 @@
 #include <sys/time.h>
 #include <stdbool.h>
 #include <pthread.h>
-//#include <lrt.h>
 #include <signal.h>
 
 #define SHMOBJ_PATH "/shm_AOS"
@@ -19,7 +18,10 @@
 #define SEM_PATH_2 "/sem_AOS_2"
 #define SEM_PATH_3 "/sem_AOS_3"
 #define MUL_SIZE 500
+#define RAND_DATA_SIZE 250000
 #define CBUFF_SIZE 500
+#define LOWER 0
+#define UPPER 9
 
 int data_array[MUL_SIZE];
 char arrived;
@@ -46,6 +48,8 @@ struct shared_data
 
 int main(int argc, char *argv[]) 
 {
+    void * addr;
+    int offset = 0;
     // initialize time struct to get the time of data transfer
 	struct timeval t_start, t_end;
     // signal handler
@@ -58,7 +62,7 @@ int main(int argc, char *argv[])
     //ftruncate(shmfd, cbuff_seg_size);
     struct shared_data * shared_msg = (struct shared_data *)
     //struct circular_buffer * circular_msg = (struct circular_buffer *)
-    mmap(NULL, shared_seg_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd, 0);
+    /*addr =*/ mmap(NULL, shared_seg_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd, offset);
     sem_t * sem_id1= sem_open(SEM_PATH_1, O_CREAT | O_RDWR, 0666, 1);
     sem_t * sem_id2= sem_open(SEM_PATH_2, O_CREAT | O_RDWR, 0666, 1);
     sem_t * sem_id3= sem_open(SEM_PATH_3, O_CREAT | O_RDWR, 0666, 1);
@@ -67,10 +71,12 @@ int main(int argc, char *argv[])
     sem_init(sem_id3, 1, 0); // initialized to zero 
 
     // create 1MB random data
-    int data_array[MUL_SIZE];
-	for (int i=0; i < MUL_SIZE; i++)
+    int data_array[RAND_DATA_SIZE];
+	for (int i=0; i < RAND_DATA_SIZE; i++)
 	{
-		data_array[i] = rand();
+		data_array[i] = (rand() % (UPPER - LOWER + 1)) + LOWER;
+        printf("%d", data_array[i]);
+        fflush(stdout);
 	}
 
     // getting input from user
@@ -94,8 +100,6 @@ int main(int argc, char *argv[])
 	}
     // get producer PID
     int producerPid = getpid();
-    printf("PID: %d", producerPid);
-    fflush(stdout);
     struct shared_data info_prod = { producerPid, size};
     // wait cli
     sem_wait(sem_id1);
@@ -154,6 +158,7 @@ int main(int argc, char *argv[])
     sem_close(sem_id2);
     sem_unlink(SEM_PATH_1);
     sem_unlink(SEM_PATH_2);
+    munmap(addr, shared_seg_size);
     
     return 0;
 }

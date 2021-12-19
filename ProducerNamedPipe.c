@@ -11,6 +11,8 @@
 
 #define MUL_SIZE 250000
 char arrived;
+#define LOWER 0
+#define UPPER 9
 
 // function to spawn processes
 int spawn(const char * program, char ** arg_list) 
@@ -56,7 +58,7 @@ int main()
 	int data_array[MUL_SIZE];
 	for (int i=0; i < MUL_SIZE; i++)
 	{
-		data_array[i] = rand();
+		data_array[i] = (rand() % (UPPER - LOWER + 1)) + LOWER;
 	}
 
     // getting input from user

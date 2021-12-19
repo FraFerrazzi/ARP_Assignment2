@@ -12,6 +12,8 @@
 #define MUL_SIZE 250000
 #define ReadEnd  0
 #define WriteEnd 1
+#define LOWER 0
+#define UPPER 9
 
 
 /*
@@ -26,6 +28,7 @@ void report_and_exit(const char* msg)
 
 int main (int argc, char *argv[]) 
 {
+	// initialize time struct to get the time of data transfer
 	struct timeval t_start, t_end;
 	int fd_unnamed[2];
 	if (pipe(fd_unnamed) < 0) 
@@ -34,8 +37,8 @@ int main (int argc, char *argv[])
 	}
 	int size, status;
 	pid_t terminated;
-	bool correct_input = true;
-	while(correct_input)
+	bool incorrect_input = true;
+	while(incorrect_input)
 	{
 		printf("Decide the amount of random Data that will be generated in Mb from 1 to 100: ");
 		fflush(stdout);
@@ -43,20 +46,19 @@ int main (int argc, char *argv[])
 		if (size <= 0 || size > 100)
 		{
 			printf("\nERROR!! Not the right input! Please choose an integer number between 1 and 100\n\n");
-			correct_input = true;
+			incorrect_input = true;
 		}
 		else
 		{
-			correct_input = false;
+			incorrect_input = false;
 		}
 	}
 	// initialize the array that will contain a MB of random data
 	int data_array[MUL_SIZE];
 	for (int i=0; i < MUL_SIZE; i++)
 	{
-		data_array[i] = rand();
+		data_array[i] = (rand() % (UPPER - LOWER + 1)) + LOWER;
 	}
-	int array_size = MUL_SIZE * size;
 	pid_t pid = fork();
 
 	if (pid < 0) // error in fork()
@@ -97,7 +99,7 @@ int main (int argc, char *argv[])
 		gettimeofday(&t_end, NULL);
 		close(fd_unnamed[ReadEnd]);
 		double time_taken = ((double)t_end.tv_sec + (double)t_end.tv_usec/1000000) - ((double)t_start.tv_sec + (double)t_start.tv_usec/1000000);
-		printf("\nTime taken for transferring data = %f sec\n\n", time_taken);
+		printf("\nTime taken for transferring data with unamed pipe = %f sec\n\n", time_taken);
 		fflush(stdout);
 	
 	}

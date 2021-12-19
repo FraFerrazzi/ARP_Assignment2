@@ -10,7 +10,6 @@
 #include <semaphore.h>
 #include <string.h>
 #include <pthread.h>
-//#include <lrt.h>
 #include <signal.h>
 
 #define SHMOBJ_PATH "/shm_AOS"
@@ -31,11 +30,12 @@ struct shared_data
 int main(int argc, char *argv[]) 
 {
     int shared_seg_size = (sizeof(struct shared_data));
-    char *ptr;
+    void * addr;
+    int offset = 0;
     
     int shmfd = shm_open(SHMOBJ_PATH, O_RDONLY, 0666);
     struct shared_data * shared_msg = (struct shared_data *)
-    mmap(NULL, shared_seg_size, PROT_READ, MAP_SHARED, shmfd, 0);
+    /*addr =*/ mmap(NULL, shared_seg_size, PROT_READ, MAP_SHARED, shmfd, offset);
     struct shared_data info_prod_in;
     sem_t * sem_id1 = sem_open(SEM_PATH_1, 0);
     sem_t * sem_id2 = sem_open(SEM_PATH_2, 0);
@@ -49,8 +49,7 @@ int main(int argc, char *argv[])
     // struct shared_data info_prod = { producerPid, size};
     int pidProducer = info_prod_in.var1;
     int size = info_prod_in.var2;
-    printf("PID: %d\nsize: %d", pidProducer, size);
-    fflush(stdout);
+    
     //initialize circular buffer
     int circular_buffer[CBUFF_SIZE];
     //reading from shm
@@ -65,6 +64,8 @@ int main(int argc, char *argv[])
                 // wait producer
                 sem_wait(sem_id1);
                 memcpy(&rd_data_array[j], &circular_buffer[k], sizeof(rd_data_array[j]));
+                printf("%d", circular_buffer[k]);
+                fflush(stdout);
                 // start prod
                 sem_post(sem_id1);
                 // increment until array is empty 
