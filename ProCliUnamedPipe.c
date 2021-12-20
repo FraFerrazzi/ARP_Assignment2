@@ -30,6 +30,7 @@ int main (int argc, char *argv[])
 {
 	// initialize time struct to get the time of data transfer
 	struct timeval t_start, t_end;
+	// initialize unnamed pipe
 	int fd_unnamed[2];
 	if (pipe(fd_unnamed) < 0) 
 	{
@@ -57,17 +58,20 @@ int main (int argc, char *argv[])
 	int data_array[MUL_SIZE];
 	for (int i=0; i < MUL_SIZE; i++)
 	{
-		data_array[i] = (rand() % (UPPER - LOWER + 1)) + LOWER;
+		data_array[i] = (rand() % (UPPER - LOWER + 1)) + LOWER; // rand data from 1 to 9
 	}
 	pid_t pid = fork();
 
 	if (pid < 0) // error in fork()
 	{
 		report_and_exit("fork");
-	}	
+	}
+		
+	// get time before starting to write on the pipe
 	gettimeofday(&t_start, NULL);
 	if (pid > 0) //I'm in the parent process
 	{
+		// close pipe for reading 
 		close(fd_unnamed[ReadEnd]); 
 		for (int i=0; i < size; i++)
 		{
@@ -76,7 +80,7 @@ int main (int argc, char *argv[])
 				write(fd_unnamed[WriteEnd], &data_array[j], sizeof(data_array[j]));
 			}
 		}
-
+		// child process waits until parent finishes
 		terminated = waitpid(pid, &status, 0);
 		if (terminated == -1) 
 		{
@@ -86,9 +90,9 @@ int main (int argc, char *argv[])
 	
 	if(pid == 0)//I'm in the child process
 	{
+		// close pipe for writing
 		close(fd_unnamed[WriteEnd]);
 		int rd_data_array[MUL_SIZE];
-		
 		for (int i = 0; i < size; i++)
 		{
 			for (int j=0; j < MUL_SIZE; j++)
@@ -96,6 +100,7 @@ int main (int argc, char *argv[])
 				read(fd_unnamed[WriteEnd], &rd_data_array[j], sizeof(rd_data_array[j]));
 			}
 		}
+		// getting time as soon as i end reading from pipe
 		gettimeofday(&t_end, NULL);
 		close(fd_unnamed[ReadEnd]);
 		double time_taken = ((double)t_end.tv_sec + (double)t_end.tv_usec/1000000) - ((double)t_start.tv_sec + (double)t_start.tv_usec/1000000);
