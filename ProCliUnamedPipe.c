@@ -17,11 +17,12 @@
 
 
 /*
-Function that handles possible errors 
-*/
-void report_and_exit(const char* msg) 
+ * Function that handles possible errors 
+ */
+void error_handler(const char* msg) 
 {
   perror(msg);
+  // with log file is sufficient to add here the fprintf
   exit(-1);    /** failure **/
 }
 
@@ -34,7 +35,7 @@ int main (int argc, char *argv[])
 	int fd_unnamed[2];
 	if (pipe(fd_unnamed) < 0) 
 	{
-		report_and_exit("fd_unnamed");
+		error_handler("fd_unnamed");
 	}
 	int size, status;
 	pid_t terminated;
@@ -64,7 +65,7 @@ int main (int argc, char *argv[])
 
 	if (pid < 0) // error in fork()
 	{
-		report_and_exit("fork");
+		error_handler("fork");
 	}
 		
 	// get time before starting to write on the pipe
@@ -84,7 +85,7 @@ int main (int argc, char *argv[])
 		terminated = waitpid(pid, &status, 0);
 		if (terminated == -1) 
 		{
-			report_and_exit("waitpid()");
+			error_handler("waitpid()");
 		}
 	}
 	
