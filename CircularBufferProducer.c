@@ -13,59 +13,77 @@
 #include <pthread.h>
 #include <signal.h>
 
-#define SHMOBJ_PATH "/shm_AOS"
+#define SHMOBJ_PATH_1 "/shm_AOS_1"
+#define SHMOBJ_PATH_2 "/shm_AOS_2"
 #define SEM_PATH_1 "/sem_AOS_1"
 #define SEM_PATH_2 "/sem_AOS_2"
 #define SEM_PATH_3 "/sem_AOS_3"
 #define MUL_SIZE 500
-#define RAND_DATA_SIZE 250000
 #define CBUFF_SIZE 500
+#define RAND_DATA_SIZE 250000
 #define LOWER 0
 #define UPPER 9
 
 int data_array[MUL_SIZE];
 char arrived;
 
-// signal handler for signals from client
-// this is done to receive a signal from client as soon as the child
-// finishes reading the data
-void sig_handler(int signo)
-{
-    if(signo == SIGINT)
-        arrived = 'a';
-}
-
+/*
+ * Defining struct for shared data 
+ */
 struct shared_data 
 {
     int var1;
     int var2;
 };
 
-/*struct circular_buffer
+/* 
+ * Function used for the handling signals from client
+ * producer receives a signal from client as soon as the child
+ * finishes reading the data
+ * when signal arrives, get the time
+ */
+void sig_handler(int signo)
 {
-    int cir_buffer[CBUFF_SIZE];
-};*/
+    if(signo == SIGINT)
+        arrived = 'a';
+}
+
+/*
+ * Function that handles possible errors 
+ */
+void error_handler(char *msg)
+{
+    perror(msg);
+    exit(0);
+}
 
 int main(int argc, char *argv[]) 
 {
-    void * addr;
+    // when signal arrives, sig_handler function is called
+    signal(SIGINT, sig_handler);
+    char * addr1;
+    char * addr2;
     int offset = 0;
+    // initializing circular buffer
+    int circular_buffer[CBUFF_SIZE];
     // initialize time struct to get the time of data transfer
 	struct timeval t_start, t_end;
-    // signal handler
-    signal(SIGINT, sig_handler);
     // defining shared memory and semaphores
     int shared_seg_size = (sizeof(struct shared_data));
-    //int cbuff_seg_size = (sizeof(struct circular_buffer));
-    int shmfd = shm_open(SHMOBJ_PATH, O_CREAT | O_RDWR, 0666);
-    ftruncate(shmfd, shared_seg_size);
-    //ftruncate(shmfd, cbuff_seg_size);
-    struct shared_data * shared_msg = (struct shared_data *)
-    //struct circular_buffer * circular_msg = (struct circular_buffer *)
-    /*addr =*/ mmap(NULL, shared_seg_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd, offset);
+    int cbuff_seg_size = (sizeof(circular_buffer));
+    int shmfd_1 = shm_open(SHMOBJ_PATH_1, O_CREAT | O_RDWR, 0666);
+    int shmfd_2 = shm_open(SHMOBJ_PATH_2, O_CREAT | O_RDWR, 0666);
+    ftruncate(shmfd_1, shared_seg_size);
+    ftruncate(shmfd_2, cbuff_seg_size);
+    struct shared_data * shared_msg = (struct shared_data *);
+    // mapping shared memory
+    addr1 = mmap(NULL, shared_seg_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_1, offset);
+    addr2 = mmap(NULL, cbuff_seg_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_2, offset);
+    // opening semaphores
     sem_t * sem_id1= sem_open(SEM_PATH_1, O_CREAT | O_RDWR, 0666, 1);
     sem_t * sem_id2= sem_open(SEM_PATH_2, O_CREAT | O_RDWR, 0666, 1);
     sem_t * sem_id3= sem_open(SEM_PATH_3, O_CREAT | O_RDWR, 0666, 1);
+    // initialize semaphores 
     sem_init(sem_id1, 1, 1); // initialized to 1
     sem_init(sem_id2, 1, CBUFF_SIZE); // initialized to dimension of circular buffer 
     sem_init(sem_id3, 1, 0); // initialized to zero 
@@ -110,8 +128,6 @@ int main(int argc, char *argv[])
 
     // getting time before writing
     gettimeofday(&t_start, NULL);
-    //initializing a buffer msg
-    int circular_buffer[CBUFF_SIZE];
     // write data from producer to client 
     for (int i=0; i < size; i++)
 	{
@@ -153,12 +169,15 @@ int main(int argc, char *argv[])
 	printf("\nTime taken for transferring data with circular buffer = %f sec\n\n", time_taken);
 	fflush(stdout);
 
-    shm_unlink(SHMOBJ_PATH);
+    shm_unlink(SHMOBJ_PATH_1);
+    shm_unlink(SHMOBJ_PATH_2);
     sem_close(sem_id1);
     sem_close(sem_id2);
     sem_unlink(SEM_PATH_1);
     sem_unlink(SEM_PATH_2);
-    munmap(addr, shared_seg_size);
+    sem_unlink(SEM_PATH_3);
+    munmap(addr1, cbuff_seg_size);
+    munmap(addr2, cbuff_seg_size);
     
     return 0;
 }
