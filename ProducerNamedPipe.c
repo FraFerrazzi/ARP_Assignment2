@@ -14,7 +14,9 @@ char arrived;
 #define LOWER 0
 #define UPPER 9
 
-// function to spawn processes
+/*
+ * Function to spawn processes
+ */
 int spawn(const char * program, char ** arg_list) 
 {
 	pid_t child_pid = fork(); // create parent and child processes
@@ -31,18 +33,30 @@ int spawn(const char * program, char ** arg_list)
     }
 }
 
-// signal handler for signals from client
-// this is done to receive a signal from client as soon as the child
-// finishes reading the data
+/* 
+ * Function used for the handling signals from client
+ * producer receives a signal from client as soon as the child
+ * finishes reading the data
+ * when signal arrives, get the time
+ */
 void sig_handler(int signo)
 {
     if(signo == SIGINT)
         arrived = 'a';
 }
 
+/*
+ *Function that handles possible errors 
+ */
+void error_handler(const char* msg) 
+{
+  perror(msg);
+  exit(-1);    /** failure **/
+}
+
 int main()
 {
-    // signal handler
+    // when signal arrives, sig_handler function is called
     signal(SIGINT, sig_handler);
     // getting PID of producer for signal handling
     int pidProducer = getpid();
@@ -89,9 +103,8 @@ int main()
     int ret_mk_client = mkfifo(f_client, 0666);
 	if (ret_mk_client< 0)
     {
-        perror("f_client");
         unlink(f_client);
-        return -1;
+        error_handler("f_client");
     }
 
     // spawning client process
@@ -104,8 +117,7 @@ int main()
     fd_client = open(f_client, O_WRONLY);
 	if (fd_client < 0) 
 	{
-        perror("fd_client");
-        return -1;
+        error_handler("fd_client");
     }
 
     // getting time before writing

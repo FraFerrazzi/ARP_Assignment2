@@ -11,6 +11,16 @@
 
 #define MUL_SIZE 250000
 
+/*
+ * Function that handles possible errors 
+ */
+void error_handler(const char* msg) 
+{
+  perror(msg);
+  // with log file is sufficient to add here the fprintf for error handling
+  exit(-1);    /** failure **/
+}
+
 int main(int argc, char *argv[])
 {
     // if there are not enough arguments, error
@@ -35,8 +45,7 @@ int main(int argc, char *argv[])
     fd_client = open(f_client, O_RDONLY);
 	if (fd_client < 0) 
 	{
-        perror("fd_client");
-        return -1;
+        error_handler("fd_client")
     }
 
     // read all the data produced
