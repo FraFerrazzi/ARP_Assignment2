@@ -18,15 +18,21 @@ char arrived;
 #define LOWER 0
 #define UPPER 9
 
-void error(char *msg)
+/*
+ *Function that handles possible errors 
+ */
+void error_handler(char *msg)
 {
     perror(msg);
     exit(0);
 }
 
-// signal handler for signals from server
-// this is done to receive a signal from server as soon as finishes 
-// reading the data
+/* 
+ * Function used for the handling signals from client
+ * producer receives a signal from client as soon as the child
+ * finishes reading the data
+ * when signal arrives, get the time
+ */
 void sig_handler(int signo)
 {
     if(signo == SIGINT)
@@ -35,7 +41,9 @@ void sig_handler(int signo)
 
 int main(int argc, char *argv[])
 {
+    // when signal arrives, sig_handler function is called
     signal(SIGINT, sig_handler);
+    // defining structures for socket
     char *ip = "127.0.0.1";
     int sockfd, n, pidClient, size;
     struct sockaddr_in serv_addr;
@@ -50,26 +58,19 @@ int main(int argc, char *argv[])
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) 
     {
-        error("ERROR opening socket");
+        error_handler("socket");
     }
-    /*
-    server = gethostbyname(argv[1]);
-    if (server == NULL) 
-    {
-        fprintf(stderr,"ERROR, no such host\n");
-        exit(0);
-    }
-    */
+    
     // bzero function is used to set all the socket structures with null values
     bzero((char *) &serv_addr, sizeof(serv_addr));
+    // store server address and port number in a string variable
     serv_addr.sin_family = AF_INET;
-    //bcopy((char *)server->h_addr,(char *)&serv_addr.sin_addr.s_addr, server->h_length);
     serv_addr.sin_addr.s_addr = inet_addr(ip);
     serv_addr.sin_port = htons(PORT);
     // connecting to server
     if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) 
     {
-        error("ERROR connecting");
+        error_handler("connect");
     }
 
     bzero(bufPidClient, sizeof(bufPidClient));

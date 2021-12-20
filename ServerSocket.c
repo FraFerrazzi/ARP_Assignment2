@@ -15,7 +15,10 @@
 #define PORT 8080
 #define MUL_SIZE 250000
 
-void error(char *msg)
+/*
+ *Function that handles possible errors 
+ */
+void error_handler(char *msg)
 {
     perror(msg);
     exit(1);
@@ -23,35 +26,35 @@ void error(char *msg)
 
 int main(int argc, char *argv[])
 {
-    //char *ip = "127.0.0.1";
+    // defining structures for socket
     int sockfd, newsockfd, clilen, pidClient, size;
-    char bufPidClient[20];
-    char bufSize[20];
     struct sockaddr_in serv_addr, cli_addr;
     int n;
+    char bufPidClient[20];
+    char bufSize[20];
     
     // creating an unbound socket in a communication domain
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) 
     {
-        error("ERROR opening socket");
+        error_handler("socket");
     }
 
     // bzero function is used to set all the socket structures with null values
     bzero((char *) &serv_addr, sizeof(serv_addr));
     // store server address and port number in a string variable
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); //INADDR_ANY doesn't work use ip
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY); 
     serv_addr.sin_port = htons(PORT);
     // assigning a local address to a socket
     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) 
     {
-        error("ERROR on binding");
+        error_handler("bind");
     }
     // prepare server for incoming client request
     if (listen(sockfd,2) < 0)
     {
-        error("ERROR on listen");
+        error_handler("listen");
     }
     // defining the size of the protocol address of the client
     clilen = sizeof(cli_addr);
@@ -59,7 +62,7 @@ int main(int argc, char *argv[])
     newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
     if (newsockfd < 0)
     { 
-        error("ERROR on accept");
+        error_handler("accept");
     }
 
     bzero(bufPidClient, sizeof(bufPidClient));
