@@ -13,16 +13,16 @@
 #include <pthread.h>
 #include <signal.h>
 
-
 #define SHMOBJ_PATH_1 "/shm_AOS_1"
 #define SHMOBJ_PATH_2 "/shm_AOS_2"
 #define SEM_PATH_1 "/sem_AOS_1"
 #define SEM_PATH_2 "/sem_AOS_2"
 #define SEM_PATH_3 "/sem_AOS_3"
-#define MUL_SIZE 500
-#define CBUFF_SIZE 500
+#define MUL_SIZE 250000
+#define CBUFF_SIZE 200
 #define RAND_DATA_SIZE 250000
 
+int circular_buffer[CBUFF_SIZE];
 int rd_data_array[MUL_SIZE];
 int * addr;
 
@@ -46,19 +46,17 @@ void error_handler(char *msg)
 
 int main(int argc, char *argv[]) 
 {
-    // initializing circular buffer
-    int circular_buffer[CBUFF_SIZE];
     int offset = 0;
      // defining shared memory and semaphores
     int shmfd_1 = shm_open(SHMOBJ_PATH_1, O_RDONLY, 0666);
-    int shmfd_2 = shm_open(SHMOBJ_PATH_2, O_RDONLY, 0666);
+    int shmfd_2 = shm_open(SHMOBJ_PATH_2, O_RDWR, 0666);
     int shared_seg_size = (sizeof(struct shared_data));
     int cbuff_seg_size = (sizeof(circular_buffer));
     struct shared_data * shared_msg = (struct shared_data *)
     // mapping memory
     mmap(NULL, shared_seg_size, PROT_READ, MAP_SHARED, shmfd_1, offset);
-    addr = mmap(NULL, cbuff_seg_size, PROT_READ, MAP_SHARED, shmfd_2, offset);
-    struct shared_data info_prod_in;
+    addr = mmap(NULL, cbuff_seg_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_2, offset);
+    struct shared_data info_prod_in; 
     // opening semaphores
     sem_t * sem_id1 = sem_open(SEM_PATH_1, 0);
     sem_t * sem_id2 = sem_open(SEM_PATH_2, 0);
@@ -71,27 +69,27 @@ int main(int argc, char *argv[])
     sem_post(sem_id1);
     // struct shared_data info_prod = { producerPid, size};
     int pidProducer = info_prod_in.var1;
+    printf("PID = %d\n", pidProducer);
+    fflush(stdout);
     int size = info_prod_in.var2;
-    
+    int out=0;
     //reading from shm
     for (int i=0; i < size; i++)
 	{
 		for (int j=0; j < MUL_SIZE; j++)
 		{
-            for(int k = 0; k < CBUFF_SIZE; k++)
-            {
-                // wait until array is empty 
-                sem_wait(sem_id3);
-                // wait producer
-                sem_wait(sem_id1);
-                memcpy(&rd_data_array[j], addr, sizeof(rd_data_array[j]));
-                printf("%d",rd_data_array[j]);
-                fflush(stdout);
-                // start prod
-                sem_post(sem_id1);
-                // increment until array is empty 
-                sem_post(sem_id2);
-            }
+            // wait until array is empty 
+            sem_wait(sem_id3);
+            // wait producer
+            sem_wait(sem_id1);
+            rd_data_array[j] = addr[out];
+            //printf("%d", addr[out]);
+            //fflush(stdout);
+            out = (out + 1) % cbuff_seg_size;            
+            // start prod
+            sem_post(sem_id1);
+            // increment until array is empty 
+            sem_post(sem_id2);
 		}
 	}
     // send signal to Producer as soon as client finishes reading
