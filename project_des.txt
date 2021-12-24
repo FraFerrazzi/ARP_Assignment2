@@ -1,0 +1,33 @@
+Assignment 2 Advanced and Robot Programming
+
+Group: DF21  
+Members: Davide Leo Parisi   S4329668
+         Francesco Ferrazzi   S5262829
+
+The opportunity that the program guarantees is to have a simple low-level solution that measures the speed efficiency when transferring data between a producer and a consumer using different models. 
+The goal of the program is to let the user decide how much data wants to transfer, using one of the four transfer primitives, which are:
+1) unnamed pipe
+2) named pipe
+3) socket
+4) shared memory with circular buffer
+The transfer of data is done in the same way, independently from the primitive used. The program sends, for each primitive, an integer number (four bytes) at every iteration. The least amount of data possible that the user can choose to transfer is 1Mb, meanwhile, the maximum amount is 100Mb. 
+The four programs, each one using a different primitive, are run separately by a bash script (running.sh) which has the task to be an interface that allows an interactive choice.
+The four programs are independent, even if they have the same working principle. 
+All programs have one producer and one client. The producer, in the beginning, fills an array of random data. The client (receiver) has another array that has the same dimension as the array filled by the producer. The starting time is taken as soon as the producer transfer the first four bytes of data. Step by step the client receives the data and takes the ending time as soon as the whole data arrives at its destination.
+The time spent during the transfer is reported to the user.
+During the execution, everything is reported in the log files. In this way, the user can have a clear view even when the program finishes running. In this way, it is possible to manage any situation or error that the user wants to check. 
+During the first stage of the project, the team thought of all possible cases that needed to be handled. Writing the pseudo-code and dividing all tasks was essential for developing the desired outcome. 
+This allowed achieving the mentality to work on the code, knowing the problems that required a solution. 
+The last stage was testing the code, making sure that the client always receives the whole data that the producer sends.
+The team concluded that the program works properly, allowing the user to know the performances of the primitives used in transferring data.
+
+To install the project type in the shell: ./install.sh <namepath>
+To read information about the project type in the shell: ./help.sh <namepath>
+To run the program type in the shell: ./running.sh <namepath>
+(<namepath> is the desired absolute path chosen by user, starting with ~)
+
+The running.sh works as a master process. After it is launched the bash script asks the user a command (1 to 4) to decide which transfer primitive wants to test.
+
+
+We would like to have feedback. We ask the user to run our program meticulously, trying to find possible errors.
+If there is any behavior that is not correctly developed, we please you to contact us to let us improve from our mistakes. Our emails are S5262829@studenti.unige.it and S4329668@studenti.unige.it.
