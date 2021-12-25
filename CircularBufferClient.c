@@ -83,8 +83,8 @@ int main(int argc, char *argv[])
             // wait producer
             sem_wait(sem_id1);
             rd_data_array[j] = addr[out];
-            //printf("%d", addr[out]);
-            //fflush(stdout);
+            printf("%d", rd_data_array[j]);
+            fflush(stdout);
             out = (out + 1) % cbuff_seg_size;            
             // start prod
             sem_post(sem_id1);

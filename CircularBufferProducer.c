@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
     // getting time before writing
     gettimeofday(&t_start, NULL);
     // write data from producer to client 
-    printf("\n\n\n\n\n\n\n");
+    printf("\n");
     fflush(stdout);
     for (int i=0; i < size; i++)
 	{
@@ -139,8 +139,8 @@ int main(int argc, char *argv[])
             // wait cli
             sem_wait(sem_id1);
             addr[in] = data_array[j];
-            //printf("%d", addr[in]);
-            //fflush(stdout);
+            printf("%d", addr[in]);
+            fflush(stdout);
             in = (in + 1) % cbuff_seg_size;
             // start cli
             sem_post(sem_id1);
