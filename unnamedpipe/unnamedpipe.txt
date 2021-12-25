@@ -1,0 +1,10 @@
+UNNAMED PIPE
+
+The program aims to calculate the performance of transmitting data between processes using unnamed pipes.
+At the beginning of the program three main parts take place:
+1) initialize the unnamed pipe and make sure that works fine.
+2) get the input from the user (1Mb to 100Mb).
+3) create 1Mb of random data
+After that, the father process forks and the child takes place. 
+At this point, the parent starts writing in the unnamed pipe. The child process starts reading.
+In the shell, the time taken to transmit the whole data is shown.
