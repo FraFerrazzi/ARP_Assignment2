@@ -1,0 +1,8 @@
+1
+
+funziona tutto settato bene
+
+Ho creato 1Mb di data
+45483
+Entro nel for
+3 [0]

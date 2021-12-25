@@ -21,9 +21,9 @@
 #define CBUFF_SIZE 200
 
 int rd_data_array[MUL_SIZE];
-// initializing circular buffer
-int circular_buffer[CBUFF_SIZE];
+// initialize circular buffer
 int * addr;
+int circular_buffer[CBUFF_SIZE];
 
 /*
  * Defining struct for shared data 
@@ -45,16 +45,24 @@ void error_handler(char *msg)
 
 int main(int argc, char *argv[]) 
 {
+    FILE *stream2;
+    // open the file
+    stream2 = fopen("./circularbufferclient.txt","w");
+    if (stream2 == NULL)
+    {
+        error_handler("fopen");
+    }
+    
     int offset = 0;
      // defining shared memory and semaphores
     int shmfd_1 = shm_open(SHMOBJ_PATH_1, O_RDONLY, 0666);
-    int shmfd_2 = shm_open(SHMOBJ_PATH_2, O_RDONLY, 0666);
+    int shmfd_2 = shm_open(SHMOBJ_PATH_2, O_RDWR, 0666);
     int shared_seg_size = (sizeof(struct shared_data));
     int cbuff_seg_size = (sizeof(circular_buffer));
     struct shared_data * shared_msg = (struct shared_data *)
     // mapping memory
     mmap(NULL, shared_seg_size, PROT_READ, MAP_SHARED, shmfd_1, offset);
-    addr = mmap(NULL, cbuff_seg_size, PROT_READ, MAP_SHARED, shmfd_2, offset);
+    addr = mmap(NULL, cbuff_seg_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_2, offset);
     struct shared_data info_prod_in;
     // opening semaphores
     sem_t * sem_id1 = sem_open(SEM_PATH_1, 0);
@@ -69,7 +77,7 @@ int main(int argc, char *argv[])
     // struct shared_data info_prod = { producerPid, size};
     int pidProducer = info_prod_in.var1;
     int size = info_prod_in.var2;
-
+    
     int out = 0;
     //reading from shm
     for (int i=0; i < size; i++)
@@ -81,6 +89,11 @@ int main(int argc, char *argv[])
             // wait producer
             sem_wait(sem_id1);
             rd_data_array[j] = addr[out];
+            if (j % 5000 == 0)
+            {
+                fprintf(stream2, "%d [%d]", rd_data_array[j], j);
+                fflush(stream2);
+            }
             out = (out + 1) % cbuff_seg_size; 
             // start prod
             sem_post(sem_id1);
@@ -91,6 +104,7 @@ int main(int argc, char *argv[])
     // send signal to Producer as soon as client finishes reading
     kill(pidProducer, SIGINT);
 
+    fclose(stream2);
     shm_unlink(SHMOBJ_PATH_1);
     shm_unlink(SHMOBJ_PATH_2);
     sem_close(sem_id1);

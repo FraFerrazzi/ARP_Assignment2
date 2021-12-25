@@ -25,9 +25,9 @@
 
 int data_array[MUL_SIZE];
 char arrived;
-// initializing circular buffer
-int circular_buffer[CBUFF_SIZE];
+// initialize circular buffer
 int * addr;
+int circular_buffer[CBUFF_SIZE];
 
 /*
  * Defining struct for shared data 
@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
     signal(SIGINT, sig_handler);
     // file for getting the size from user
     FILE *stream;
+    FILE *stream1;
     int offset = 0;
     int size;
     
@@ -77,6 +78,16 @@ int main(int argc, char *argv[])
     // read size from file
     fscanf(stream, "%d", &size);
     fclose(stream);
+
+    // debug
+    stream1 = fopen("./circularbuffer.txt","w");
+    if (stream1 == NULL)
+    {
+        error_handler("fopen");
+    }
+    // read size from file
+    fprintf(stream1, "%d", size);
+    fflush(stream1);
 
     // initialize time struct to get the time of data transfer
 	struct timeval t_start, t_end;
@@ -99,6 +110,8 @@ int main(int argc, char *argv[])
     sem_init(sem_id1, 1, 1); // initialized to 1
     sem_init(sem_id2, 1, cbuff_seg_size); // initialized to dimension of circular buffer 
     sem_init(sem_id3, 1, 0); // initialized to zero 
+    fprintf(stream1, "\n\nfunziona tutto settato bene\n\n");
+    fflush(stream1);
 
     // create 1MB random data
     int data_array[MUL_SIZE];
@@ -106,6 +119,8 @@ int main(int argc, char *argv[])
 	{
 		data_array[i] = (rand() % (UPPER - LOWER + 1)) + LOWER;
 	}
+	fprintf(stream1, "Ho creato 1Mb di data");
+    fflush(stream1);
 
     // get producer PID
     int producerPid = getpid();
@@ -116,13 +131,18 @@ int main(int argc, char *argv[])
     memcpy(shared_msg, &info_prod, sizeof(struct shared_data));
     // start cli
     sem_post(sem_id3);
+    fprintf(stream1, "\n%d", producerPid);
+    fflush(stream1);
 
     int in = 0;
     // getting time before writing
     gettimeofday(&t_start, NULL);
     // write data from producer to client 
+    
     for (int i=0; i < size; i++)
 	{
+        fprintf(stream1, "\nEntro nel for\n");
+        fflush(stream1);
         for (int j=0; j < MUL_SIZE; j++)
 		{
             //wait until array is full
@@ -130,6 +150,11 @@ int main(int argc, char *argv[])
             // wait cli
             sem_wait(sem_id1);
             addr[in] = data_array[j];
+            if (j % 5000 == 0)
+            {
+                fprintf(stream1, "%d [%d]", addr[in], j);
+                fflush(stream1);
+            }
             in = (in + 1) % cbuff_seg_size;
             // start cli
             sem_post(sem_id1);
@@ -137,6 +162,8 @@ int main(int argc, char *argv[])
             sem_post(sem_id3);
 		}
 	}
+    fprintf(stream1, "Ho scritto");
+    fflush(stream1);
     
     // until the signal is not received means that client is still reading
     int counter = 0;
@@ -147,13 +174,15 @@ int main(int argc, char *argv[])
         {
             gettimeofday(&t_end, NULL); // get time when client finishes reading
             not_received = false;
+            fprintf(stream1, "Ricevuto segnale");
+            fflush(stream1);
         }
         else
         {
             counter++;
         }
     }
-
+    fclose(stream1);
     // calculate the time it took to write and read data
     double time_taken = ((double)t_end.tv_sec + (double)t_end.tv_usec/1000000) - ((double)t_start.tv_sec + (double)t_start.tv_usec/1000000);
     // open the file
@@ -162,11 +191,11 @@ int main(int argc, char *argv[])
     {
         error_handler("fopen");
     }
-	fprintf(stream, "\nTime taken for transferring data with circular buffer = %f sec\n\n", time_taken);
+	fprintf(stream, "\n\nTime taken for transferring data with circular buffer = %f sec\n\n", time_taken);
 	fflush(stream);
     fclose(stream);
 
-
+    
     shm_unlink(SHMOBJ_PATH_1);
     shm_unlink(SHMOBJ_PATH_2);
     sem_close(sem_id1);
