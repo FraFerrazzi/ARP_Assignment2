@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 {
     FILE *stream2;
     // open the file
-    stream2 = fopen("./circularbufferclient.txt","w");
+    stream2 = fopen("./../logfile/circularbufferclient.txt","w");
     if (stream2 == NULL)
     {
         error_handler("fopen");
@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
     // send signal to Producer as soon as client finishes reading
     kill(pidProducer, SIGINT);
 
+    sleep(1);
     fclose(stream2);
     shm_unlink(SHMOBJ_PATH_1);
     shm_unlink(SHMOBJ_PATH_2);

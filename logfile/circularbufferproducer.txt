@@ -3,5 +3,5 @@
 funziona tutto settato bene
 
 Ho creato 1Mb di data
-9081
+4879
 Entro nel for

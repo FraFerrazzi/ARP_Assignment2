@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
     fclose(stream);
 
     // debug
-    stream1 = fopen("./circularbuffer.txt","w");
+    stream1 = fopen("./../logfile/circularbufferproducer.txt","w");
     if (stream1 == NULL)
     {
         error_handler("fopen");
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
 	fflush(stream);
     fclose(stream);
 
-    
+    sleep(1);
     shm_unlink(SHMOBJ_PATH_1);
     shm_unlink(SHMOBJ_PATH_2);
     sem_close(sem_id1);
