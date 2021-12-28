@@ -1,4 +1,8 @@
 #!/bin/bash
 
 ./CircularBufferProducer &
-./CircularBufferClient
+
+konsole -e ./CircularBufferClient
+
+
+

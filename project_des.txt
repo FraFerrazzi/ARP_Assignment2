@@ -3,6 +3,8 @@ Assignment 2 Advanced and Robot Programming
 Group: DF21  
 Members: Davide Leo Parisi   S4329668
          Francesco Ferrazzi   S5262829
+         
+PROJECT DESCRIPTION
 
 The opportunity that the program guarantees is to have a simple low-level solution that measures the speed efficiency when transferring data between a producer and a consumer using different models. 
 The goal of the program is to let the user decide how much data wants to transfer, using one of the four transfer primitives, which are:

@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
         error_handler("fopen");
     }
     // read size from file
-    fprintf(stream1, "%d", size);
+    fprintf(stream1, "size is: %d\n", size);
     fflush(stream1);
 
     // initialize time struct to get the time of data transfer
@@ -94,6 +94,8 @@ int main(int argc, char *argv[])
     // defining shared memory and semaphores
     int shared_seg_size = (sizeof(struct shared_data));
     int cbuff_seg_size = (sizeof(circular_buffer));
+    fprintf(stream1, "size\n");
+    fflush(stream1);
     int shmfd_1 = shm_open(SHMOBJ_PATH_1, O_CREAT | O_RDWR, 0666);
     int shmfd_2 = shm_open(SHMOBJ_PATH_2, O_CREAT | O_RDWR, 0666);
     ftruncate(shmfd_1, shared_seg_size);
@@ -102,6 +104,8 @@ int main(int argc, char *argv[])
     // mapping shared memory
     mmap(NULL, shared_seg_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_1, offset);
     addr = mmap(NULL, cbuff_seg_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_2, offset);
+    fprintf(stream1, "mmap\n");
+    fflush(stream1);
     // opening semaphores
     sem_t * sem_id1= sem_open(SEM_PATH_1, O_CREAT | O_RDWR, 0666, 1);
     sem_t * sem_id2= sem_open(SEM_PATH_2, O_CREAT | O_RDWR, 0666, 1);
@@ -110,7 +114,7 @@ int main(int argc, char *argv[])
     sem_init(sem_id1, 1, 1); // initialized to 1
     sem_init(sem_id2, 1, cbuff_seg_size); // initialized to dimension of circular buffer 
     sem_init(sem_id3, 1, 0); // initialized to zero 
-    fprintf(stream1, "\n\nfunziona tutto settato bene\n\n");
+    fprintf(stream1, "\nfunziona tutto settato bene\n\n");
     fflush(stream1);
 
     // create 1MB random data
@@ -141,7 +145,7 @@ int main(int argc, char *argv[])
     
     for (int i=0; i < size; i++)
 	{
-        fprintf(stream1, "\nEntro nel for\n");
+        fprintf(stream1, "\n\nMB number: %d\n\n", i+1);
         fflush(stream1);
         for (int j=0; j < MUL_SIZE; j++)
 		{
@@ -152,7 +156,7 @@ int main(int argc, char *argv[])
             addr[in] = data_array[j];
             if (j % 5000 == 0)
             {
-                fprintf(stream1, "%d [%d]", addr[in], j);
+                fprintf(stream1, "[%d]-%d ", j, addr[in]);
                 fflush(stream1);
             }
             in = (in + 1) % cbuff_seg_size;

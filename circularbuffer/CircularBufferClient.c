@@ -82,6 +82,8 @@ int main(int argc, char *argv[])
     //reading from shm
     for (int i=0; i < size; i++)
 	{
+        fprintf(stream2, "\n\nMB number: %d\n\n", i+1);
+        fflush(stream2);
 		for (int j=0; j < MUL_SIZE; j++)
 		{  
             // wait until array is empty 
@@ -91,7 +93,7 @@ int main(int argc, char *argv[])
             rd_data_array[j] = addr[out];
             if (j % 5000 == 0)
             {
-                fprintf(stream2, "%d [%d]", rd_data_array[j], j);
+                fprintf(stream2, "[%d]-%d ", j, rd_data_array[j]);
                 fflush(stream2);
             }
             out = (out + 1) % cbuff_seg_size; 
