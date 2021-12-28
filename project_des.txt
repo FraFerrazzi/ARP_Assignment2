@@ -22,6 +22,11 @@ During the first stage of the project, the team thought of all possible cases th
 This allowed achieving the mentality to work on the code, knowing the problems that required a solution. 
 The last stage was testing the code, making sure that the client always receives the whole data that the producer sends.
 The team concluded that the program works properly, allowing the user to know the performances of the primitives used in transferring data.
+One thing that we noticed was that adding the log file and printing informations, such as possible errors and part of the sent data, the performances of all programs decreased. In fact, the time taken when log files are used almost doubles for all the programs.
+The main reason is because the system call for writing and flushing takes time to be executed. 
+Despite this, we are satisfied from the performances of our programs, except for the circular buffer when low amount of data needs to be transmitted.
+The circular buffer, when small amounts of data needs to be sent (1Mb-5Mb), is the slowest among the programs. 
+When big amount of data needs to be sent (over 10Mb) the circular buffer excels, beeing the fastest among the programs (11sec for 100Mb on my virtual machine).
 
 To install the project type in the shell: ./install.sh <namepath>
 To read information about the project type in the shell: ./help.sh <namepath>
