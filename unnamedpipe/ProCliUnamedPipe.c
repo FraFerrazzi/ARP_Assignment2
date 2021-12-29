@@ -6,6 +6,7 @@
 #include <stdbool.h> 
 #include <string.h>
 #include <sys/time.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -14,38 +15,51 @@
 #define WriteEnd 1
 #define LOWER 0
 #define UPPER 9
+
+//Initilize and open pointers for writing in Producer and Consumer logfile
+FILE *logfileProd;
+FILE *logfileCons;
+// initialize variables for time informations for log file
+time_t rawtime;
+struct tm * timeinfo;
 /*
 Function that handles possible errors 
 */
-void report_and_exit(const char* msg) 
+void error_handler_child(char *msg)
 {
-  perror(msg);
-  exit(-1);/** failure **/
+    perror(msg);
+    fprintf(logfileCons, "%s", msg);
+    fflush(logfileCons);
+    exit(0);
 }
-
+void error_handler_father(char *msg)
+{
+    perror(msg);
+    fprintf(logfileProd, "%s", msg);
+    fflush(logfileProd);
+    exit(0);
+}
 
 int main (int argc, char *argv[]) 
 {
-	// initialize variables for time informations for log file
-	time_t rawtime;
-  	struct tm * timeinfo;
-	//Initilize and open pointers for writing in Producer and Consumer logfile
-	FILE *logfileProd;
-	FILE *logfileCons;
-    logfileProd = fopen("./../logfile/logfileProdUnnamedPipe.txt", "w");
+	
+	
+    logfileProd = fopen("./../logfile/UnnamedPipe/logfileProdUnnamedPipe.txt", "w");
 	if (logfileProd == NULL)
     {
         printf("Error opening the Producer logfile!\n");
         exit(1);
     }
 
-	logfileCons = fopen("./../logfile/logfileConsUnnamedPipe.txt", "w");
+	logfileCons = fopen("./../logfile/UnnamedPipe/logfileConsUnnamedPipe.txt", "w");
 	if (logfileCons == NULL)
     {
-        printf("Error opening the Producer logfile!\n");
+        printf("Error opening the Consumer logfile!\n");
         exit(1);
     }
-	fprintf(logfileProd, "PRODUCER PROCESS STARTS:\n");
+	time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+	fprintf(logfileProd, "%sPRODUCER PROCESS STARTS:\n", asctime(timeinfo));
     fflush(logfileProd);
 	// initialize time struct to get the time of data transfer
 	struct timeval t_start, t_end;
@@ -53,9 +67,7 @@ int main (int argc, char *argv[])
 	int fd_unnamed[2];
 	if (pipe(fd_unnamed) < 0) 
 	{
-		report_and_exit("fd_unnamed");
-		fprintf(logfileProd, "fd_unnamed\n");
-    	fflush(logfileProd);
+		error_handler_father("fd_unnamed");
 	}
 	int size, status;
 	pid_t terminated;
@@ -81,13 +93,13 @@ int main (int argc, char *argv[])
 	if (pid > 0) 
 	{
 		/*I'm in the parent process*/
-		fprintf(logfileProd, "\nProducer forked consumer\n");
+		time ( &rawtime );
+  		timeinfo = localtime ( &rawtime );
+		fprintf(logfileProd, "\n%sProducer forked consumer\n", asctime(timeinfo));
 		fflush(logfileProd);
 		if (pid < 0) // error in fork()
 		{
-			report_and_exit("fork");
-			fprintf(logfileProd, "fork");
-			fflush(logfileProd);
+			error_handler_father("fork");
 		}	
 		
 		// initialize the array that will contain a MB of random data
@@ -96,20 +108,28 @@ int main (int argc, char *argv[])
 		{
 			data_array[i] = (rand() % (UPPER - LOWER + 1)) + LOWER; // rand data from 1 to 9
 		}
-		fprintf(logfileProd,"\ndata_array for writing filled\n");
+		time ( &rawtime );
+  		timeinfo = localtime ( &rawtime );
+		fprintf(logfileProd,"\n%sdata_array for writing filled\n", asctime(timeinfo));
     	fflush(logfileProd);
 		//get time before starting to write on the pipe
 		gettimeofday(&t_start, NULL);
-		fprintf(logfileProd,"\nGet time before starting to write on the pipe\n");
+		time ( &rawtime );
+  		timeinfo = localtime ( &rawtime );
+		fprintf(logfileProd,"\n%sGet time before starting to write on the pipe\n", asctime(timeinfo));
 		fflush(logfileProd);
 
 		// close pipe for reading 
 		close(fd_unnamed[ReadEnd]); 
-		fprintf(logfileProd,"\nWriting stage:\n");
+		time ( &rawtime );
+  		timeinfo = localtime ( &rawtime );
+		fprintf(logfileProd,"\n%sWriting stage:", asctime(timeinfo));
     	fflush(logfileProd);
 		for (int i=0; i < size; i++)
 		{
-			fprintf(logfileProd,"\nMB number %d:\n", i+1);
+			time ( &rawtime );
+  			timeinfo = localtime ( &rawtime );
+			fprintf(logfileProd,"\n\n%sMB number %d:\n", asctime(timeinfo),i+1);
     		fflush(logfileProd);
 			for (int j=0; j < MUL_SIZE; j++)
 			{
@@ -126,38 +146,44 @@ int main (int argc, char *argv[])
 		terminated = waitpid(pid, &status, 0);
 		if (terminated == -1) 
 		{
-			report_and_exit("waitpid()");
-			fprintf(logfileProd, "\n\nwaitpid()\n");
-			fflush(logfileProd);
+			error_handler_father("waitpid()");
 		}
 		// getting time as soon as i end reading from pipe
 		gettimeofday(&t_end, NULL);
-		fprintf(logfileProd,"\n\nGet time at the end of transmission\n");
+		time ( &rawtime );
+  		timeinfo = localtime ( &rawtime );
+		fprintf(logfileProd,"\n\n%sGet time at the end of transmission\n", asctime(timeinfo));
 		fflush(logfileProd);
 		close(fd_unnamed[ReadEnd]);
 		//time in sec
 		double time_taken = ((double)t_end.tv_sec + (double)t_end.tv_usec/1000000) - ((double)t_start.tv_sec + (double)t_start.tv_usec/1000000);
 		printf("\nTime taken for transferring data = %f sec\n", time_taken);
 		fflush(stdout);
-		fprintf(logfileProd,"\nTime taken for transferring data = %f sec\n", time_taken);
-		fprintf(logfileProd,"\nProducer process exiting...\n");
+		time ( &rawtime );
+  		timeinfo = localtime ( &rawtime );
+		fprintf(logfileProd,"\n%sTime taken for transferring data = %f sec\n", asctime(timeinfo),time_taken);
+		fprintf(logfileProd,"\n%sProducer process exiting...\n", asctime(timeinfo));
 		fflush(logfileProd);
-
+		fclose(logfileProd);
 	}
 	
 	if(pid == 0)//I'm in the child process
 	{
-		fprintf(logfileCons, "CONSUMER PROCESS STARTS: \n");
+		time ( &rawtime );
+  		timeinfo = localtime ( &rawtime );
+		fprintf(logfileCons, "%sCONSUMER PROCESS STARTS: \n", asctime(timeinfo));
 		fflush(logfileCons);
-		
 		// close pipe for writing
 		close(fd_unnamed[WriteEnd]);
 		int rd_data_array[MUL_SIZE];
-		
-		fprintf(logfileCons, "\nReading stage:\n");
+		time ( &rawtime );
+  		timeinfo = localtime ( &rawtime );
+		fprintf(logfileCons, "\n%s,Reading stage:", asctime(timeinfo));
 		fflush(logfileCons);
 		for (int i = 0; i < size; i++){
-			fprintf(logfileCons, "\nMB number %d:\n", i+1);
+			time ( &rawtime );
+  			timeinfo = localtime ( &rawtime );
+			fprintf(logfileCons, "\n\n%sMB number %d:\n", asctime(timeinfo),i+1);
 			fflush(logfileCons);
 			for (int j = 0; j < MUL_SIZE; j++)
 			{
@@ -169,9 +195,11 @@ int main (int argc, char *argv[])
 				}
 			}
 		}
-		fprintf(logfileCons,"\n\nConsumer process exiting...\n");
+		time ( &rawtime );
+  		timeinfo = localtime ( &rawtime );
+		fprintf(logfileCons,"\n\n%sConsumer process exiting...\n", asctime(timeinfo));
 		fflush(logfileCons);
+		fclose(logfileCons);
 	}
-	
 	return 0;
 }

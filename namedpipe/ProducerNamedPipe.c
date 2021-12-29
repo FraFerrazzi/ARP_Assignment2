@@ -7,6 +7,7 @@
 #include <sys/stat.h> 
 #include <sys/types.h> 
 #include <sys/time.h>
+#include <time.h>
 #include <stdbool.h>
 
 #define MUL_SIZE 250000
@@ -14,24 +15,12 @@ char arrived;
 #define LOWER 0
 #define UPPER 9
 
-/*
- * Function to spawn processes
- */
-int spawn(const char * program, char ** arg_list) 
-{
-	pid_t child_pid = fork(); // create parent and child processes
-	// if we are in parent process, return the PID of the child
-	if (child_pid != 0) 
-		return child_pid;
-	// if we are in child process, call execvp in order to sobstitute caller's image with the
-	// executable file program
-	else 
-	{
-    	execvp (program, arg_list);
-    	perror("execvp failed");
-    	return 1;
-    }
-}
+//Open a pointer file for writing in log file
+FILE *logfile;
+
+// initialize variables for time informations for log file
+time_t rawtime;
+struct tm * timeinfo;
 
 /* 
  * Function used for the handling signals from client
@@ -48,21 +37,54 @@ void sig_handler(int signo)
 /*
  *Function that handles possible errors 
  */
-void error_handler(const char* msg) 
+void error_handler(char *msg)
 {
-  perror(msg);
-  exit(-1);    /** failure **/
+    perror(msg);
+    fprintf(logfile, "%s", msg);
+    fflush(logfile);
+    exit(0);
 }
+
+/*
+ * Function to spawn processes
+ */
+int spawn(const char * program, char ** arg_list) 
+{
+	pid_t child_pid = fork(); // create parent and child processes
+	// if we are in parent process, return the PID of the child
+	if (child_pid != 0) 
+		return child_pid;
+	// if we are in child process, call execvp in order to sobstitute caller's image with the
+	// executable file program
+	else 
+	{
+    	execvp (program, arg_list);
+    	perror("execvp failed\n");
+        return 1;
+    }
+}
+
 
 int main()
 {
+    logfile = fopen("./../logfile/NamedPipe/logfileProducerNamedPipe.txt", "w");
+    if(logfile == NULL)
+    {
+        printf("Error in opening logfile\n");
+        exit(1);
+    }
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile, "%sPRODUCER PROGRAM STARTS:\n", asctime(timeinfo));
+    fflush(logfile);
     // when signal arrives, sig_handler function is called
     signal(SIGINT, sig_handler);
     // getting PID of producer for signal handling
     int pidProducer = getpid();
     char buf_pidProducer[20];
     sprintf(buf_pidProducer, "%d", pidProducer);
-
+    //fprintf(logfile,"Size: %d\n", size);
+    fflush(logfile);
     // initialize time struct to get the time of data transfer
 	struct timeval t_start, t_end;
     // initialize client PID 
@@ -74,7 +96,10 @@ int main()
 	{
 		data_array[i] = (rand() % (UPPER - LOWER + 1)) + LOWER;
 	}
-
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sdata_array for writing filled\n", asctime(timeinfo));
+    fflush(logfile);
     // getting input from user
     // this is done to define how many MB of data are going to be transferred
     char buf_size[20];
@@ -110,8 +135,17 @@ int main()
     // spawning client process
     // passing to client the pid of the producer and the size given as input from user
     char * arg_list_client [] = { "./ClientNamedPipe", buf_pidProducer, buf_size, (char*)NULL };
-    pidClient = spawn("./ClientNamedPipe", arg_list_client); 
-
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sProducer Pid and chosen size are sent:\n", asctime(timeinfo));
+    fprintf(logfile,"PID: [%d]\n", pidProducer);
+    fprintf(logfile,"Size: [%d]\n", size);
+    fflush(logfile);
+    pidClient = spawn("./ClientNamedPipe", arg_list_client);
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime ); 
+    fprintf(logfile,"\n%sProducer forked Consumer\n", asctime(timeinfo));
+    fflush(logfile);
     // open the pipe
     int fd_client;	
     fd_client = open(f_client, O_WRONLY);
@@ -119,19 +153,42 @@ int main()
 	{
         error_handler("fd_client");
     }
-
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sFile descriptor for writing opened\n", asctime(timeinfo));
+    fflush(logfile);
     // getting time before writing
     gettimeofday(&t_start, NULL);
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sGet time before starting to write on the pipe\n", asctime(timeinfo));
+    fflush(logfile);
     // write data from producer to client 
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sWriting:", asctime(timeinfo));
+    fflush(logfile);
     for (int i=0; i < size; i++)
 	{
+        time ( &rawtime );
+  	    timeinfo = localtime ( &rawtime );
+        fprintf(logfile,"\n\n%sMB number %d: \n", asctime(timeinfo), i+1);
+        fflush(logfile);
 		for (int j=0; j < MUL_SIZE; j++)
 		{
 			write(fd_client, &data_array[j], sizeof(data_array[j]));
+            if (j % 5000 == 0)
+            {
+                fprintf(logfile,"[%d]-%d; ", j, data_array[j]);
+                fflush(logfile);
+            }
 		}
 	}
     close(fd_client);
-
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n\n%sEnd of writing\n", asctime(timeinfo));
+    fflush(logfile);
     // until the signal is not received means that client is still reading
     int counter = 0;
     bool not_received = true;
@@ -140,6 +197,10 @@ int main()
         if (arrived == 'a') // when signal arrives enter the loop
         {
             gettimeofday(&t_end, NULL); // get time when client finishes reading
+            time ( &rawtime );
+  	        timeinfo = localtime ( &rawtime );
+            fprintf(logfile,"\n%sGet time at the end of transmission\n", asctime(timeinfo));
+            fflush(logfile);
             not_received = false;
         }
         else
@@ -151,6 +212,14 @@ int main()
     double time_taken = ((double)t_end.tv_sec + (double)t_end.tv_usec/1000000) - ((double)t_start.tv_sec + (double)t_start.tv_usec/1000000);
 	printf("\nTime taken for transferring data with named pipe = %f sec\n\n", time_taken);
 	fflush(stdout);
-
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sTime taken for transferring data with named pipe = %f sec\n\n", asctime(timeinfo), time_taken);
+    fflush(logfile);
     unlink(f_client);
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile, "\n%sProducer program exiting...\n", asctime(timeinfo));
+    fflush(logfile);
+    fclose(logfile);
 }

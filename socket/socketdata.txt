@@ -1,4 +1,4 @@
 
 
-Time taken for transferring data with socket = 15.442786 sec
+Time taken for transferring data with socket = 1.268346 sec
 

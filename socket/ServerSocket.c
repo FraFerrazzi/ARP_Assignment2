@@ -12,6 +12,7 @@
 #include <netdb.h> 
 #include <arpa/inet.h>
 #include <sys/time.h>
+#include <time.h>
 
 #define PORT 8070
 #define MUL_SIZE 250000
@@ -19,13 +20,21 @@ char arrived;
 #define LOWER 0
 #define UPPER 9
 
+//Initilize and open pointers for writing in logfile
+FILE *logfile;
+// initialize variables for time informations for log file
+time_t rawtime;
+struct tm * timeinfo;
+
 /*
  *Function that handles possible errors 
  */
 void error_handler(char *msg)
 {
     perror(msg);
-    exit(1);
+    fprintf(logfile, "%s", msg);
+    fflush(logfile);
+    exit(0);
 }
 
 /* 
@@ -42,6 +51,16 @@ void sig_handler(int signo)
 
 int main(int argc, char *argv[])
 {
+    logfile = fopen("./../logfile/Socket/logfileServerSocket.txt", "w");
+    if(logfile == NULL)
+    {
+        printf("Error in opening logfile\n");
+        exit(1);
+    }
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile, "%sPRODUCER PROGRAM STARTS:\n", asctime(timeinfo));
+    fflush(logfile);
     // when signal arrives, sig_handler function is called
     signal(SIGINT, sig_handler);
     // file for getting the size from user
@@ -110,24 +129,50 @@ int main(int argc, char *argv[])
     pidServer = getpid();
     sprintf(bufPidServer, "%d", pidServer);
     write(newsockfd, bufPidServer, sizeof(bufPidServer));
-
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sServer's Pid and chosen size  are sent:\n", asctime(timeinfo));
+    fprintf(logfile,"PID: [%d]\n", pidServer);
+    fprintf(logfile,"Size: [%d]\n", size);
     bzero(data_array,MUL_SIZE);
     // create the array that will contain one MB of random data
 	for (int i=0; i < MUL_SIZE; i++)
 	{
 		data_array[i] = (rand() % (UPPER - LOWER + 1)) + LOWER;
 	}
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sData_array for writing filled\n", asctime(timeinfo));
+    fflush(logfile);
     // getting time before writing
     gettimeofday(&t_start, NULL);
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sGet time before starting to write on the pipe\n", asctime(timeinfo));
+    fflush(logfile);
     // write data from client to server
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sWriting:", asctime(timeinfo));
+    fflush(logfile);
     for (int i=0; i < size; i++)
 	{
+        fprintf(logfile,"\n\n%sMB number %d: \n", asctime(timeinfo),i+1);
+        fflush(logfile);
 		for (int j=0; j < MUL_SIZE; j++)
 		{
 			write(newsockfd, &data_array[j], sizeof(data_array[j]));
+             if (j % 5000 == 0)
+            {
+                fprintf(logfile,"[%d]-%d; ", j, data_array[j]);
+                fflush(logfile);
+            }
 		}
 	}
-    
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n\n%sEnd of writing\n", asctime(timeinfo));
+    fflush(logfile);
     // until the signal is not received means that client is still reading
     int counter = 0;
     bool not_received = true;
@@ -136,6 +181,10 @@ int main(int argc, char *argv[])
         if (arrived == 'a') // when signal arrives enter the loop
         {
             gettimeofday(&t_end, NULL); // get time when client finishes reading
+            time ( &rawtime );
+  	        timeinfo = localtime ( &rawtime );
+            fprintf(logfile,"\n%sGet time at the end of transmission\n", asctime(timeinfo));
+            fflush(logfile);
             not_received = false;
         }
         else
@@ -153,8 +202,17 @@ int main(int argc, char *argv[])
     }
 	fprintf(stream, "\n\nTime taken for transferring data with socket = %f sec\n\n", time_taken);
 	fflush(stream);
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sTime taken for transferring data with named pipe = %f sec\n\n", asctime(timeinfo), time_taken);
+    fflush(logfile);
     fclose(stream);
 
     // After reading the whole data close the socket
     close(sockfd);
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile, "\n%sProducer program exiting...\n", asctime(timeinfo));
+    fflush(logfile);
+    fclose(logfile);
 }

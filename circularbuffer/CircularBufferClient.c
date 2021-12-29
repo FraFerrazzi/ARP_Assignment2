@@ -25,6 +25,12 @@ int rd_data_array[MUL_SIZE];
 int * addr;
 int circular_buffer[CBUFF_SIZE];
 
+//Open a pointer file for writing in log file
+FILE *logfile;
+// initialize variables for time informations for log file
+time_t rawtime;
+struct tm * timeinfo;
+
 /*
  * Defining struct for shared data 
  */
@@ -40,19 +46,23 @@ struct shared_data
 void error_handler(char *msg)
 {
     perror(msg);
+    fprintf(logfile, "%s", msg);
+    fflush(logfile);
     exit(0);
 }
 
 int main(int argc, char *argv[]) 
 {
-    FILE *stream2;
     // open the file
-    stream2 = fopen("./../logfile/circularbufferclient.txt","w");
-    if (stream2 == NULL)
+    logfile = fopen("./../logfile/CircularBuffer/CircularBufferClient.txt","w");
+    if (logfile == NULL)
     {
         error_handler("fopen");
     }
-    
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile, "%sCONSUMER PROGRAM STARTS:\n", asctime(timeinfo));
+    fflush(logfile);
     int offset = 0;
      // defining shared memory and semaphores
     int shmfd_1 = shm_open(SHMOBJ_PATH_1, O_RDONLY, 0666);
@@ -77,13 +87,24 @@ int main(int argc, char *argv[])
     // struct shared_data info_prod = { producerPid, size};
     int pidProducer = info_prod_in.var1;
     int size = info_prod_in.var2;
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sProducer Pid and chosen size are received:\n", asctime(timeinfo));
+    fprintf(logfile,"PID: [%d]\n", pidProducer);
+    fprintf(logfile,"Size: [%d]\n", size);
     
     int out = 0;
     //reading from shm
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n%sReading:\n", asctime(timeinfo));
+    fflush(logfile);
     for (int i=0; i < size; i++)
 	{
-        fprintf(stream2, "\n\nMB number: %d\n\n", i+1);
-        fflush(stream2);
+        time ( &rawtime );
+  	    timeinfo = localtime ( &rawtime );
+        fprintf(logfile,"\n\n%sMB number %d: \n", asctime(timeinfo), i+1);
+        fflush(logfile);
 		for (int j=0; j < MUL_SIZE; j++)
 		{  
             // wait until array is empty 
@@ -93,8 +114,8 @@ int main(int argc, char *argv[])
             rd_data_array[j] = addr[out];
             if (j % 5000 == 0)
             {
-                fprintf(stream2, "[%d]-%d ", j, rd_data_array[j]);
-                fflush(stream2);
+                fprintf(logfile, "[%d]-%d ", j, rd_data_array[j]);
+                fflush(logfile);
             }
             out = (out + 1) % cbuff_seg_size; 
             // start prod
@@ -103,11 +124,20 @@ int main(int argc, char *argv[])
             sem_post(sem_id2); 
 		}
 	}
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile,"\n\n%sEnd of reading\n", asctime(timeinfo));
+    fflush(logfile);
     // send signal to Producer as soon as client finishes reading
+    time ( &rawtime );
+  	timeinfo = localtime ( &rawtime );
+    fprintf(logfile, "\n%sSending signal of finishing consuming data\n", asctime(timeinfo));
+    fprintf(logfile, "\n%sConsumer program exiting...\n", asctime(timeinfo));
+    fflush(logfile);
     kill(pidProducer, SIGINT);
 
     sleep(1);
-    fclose(stream2);
+    fclose(logfile);
     shm_unlink(SHMOBJ_PATH_1);
     shm_unlink(SHMOBJ_PATH_2);
     sem_close(sem_id1);
