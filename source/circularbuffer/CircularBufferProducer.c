@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
     // open the file
-    //stream = fopen("./circularbufferdata.txt","r");
+    stream = fopen("./circularbufferdata.txt","r");
     if (stream == NULL)
     {
         error_handler("fopen");
