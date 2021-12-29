@@ -31,7 +31,7 @@ When big amount of data needs to be sent (over 10Mb) the circular buffer excels,
 To install the project type in the shell: ./install.sh <namepath>
 To read information about the project type in the shell: ./help.sh <namepath>
 To run the program type in the shell: ./running.sh <namepath>
-(<namepath> is the desired absolute path chosen by user, starting with ~)
+(<namepath> is the desired absolute path chosen by user, starting with ~ and finishing with the name of the folder in which the programs are going to be stored)
 
 The running.sh works as a master process. After it is launched the bash script asks the user a command (1 to 4) to decide which transfer primitive wants to test.
 

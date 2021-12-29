@@ -20,8 +20,8 @@ gcc ClientSocket.c -o ClientSocket
 chmod +x runSocket.sh
 
 cd /$1/circularbuffer
-gcc CircularBufferProducer.c -o CircularBufferProducer
-gcc CircularBufferClient.c -o CircularBufferClient
+gcc CircularBufferProducer.c -lrt -pthread -o CircularBufferProducer
+gcc gcc CircularBufferClient.c -lrt -pthread -o CircularBufferClient
 chmod +x runCircularBuffer.sh
 
 

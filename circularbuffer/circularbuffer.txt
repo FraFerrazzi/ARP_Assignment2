@@ -1,7 +1,9 @@
-1
+CIRCULAR BUFFER
 
-funziona tutto settato bene
-
-Ho creato 1Mb di data
-9081
-Entro nel for
+The program aims to calculate the performance of transmitting data between processes using shared memory with circular buffer.
+The producer and the client must be launched in two separate shells.
+The producer creates 1Mb of random data and reads from a file the size of the data that the user wants to transimt (1Mb to 100Mb).
+The producer initialize and creates the shared memory and the semaphores.
+The client waits until the producer sends the size and its pid.
+At this point, the producer starts writing using the circular buffer communication. The client process reads.
+In the shell, the time taken to transmit the whole data is shown.
