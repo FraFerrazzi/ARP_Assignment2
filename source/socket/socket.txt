@@ -1,0 +1,9 @@
+SOCKET
+
+The program aims to calculate the performance of transmitting data between processes using socket.
+Sockets let two (or more) processes communicate. In our case, there is a server and a client.
+The server is passive, creates the socket, and waits for the client which plugs into the server's socket.
+The processes are on the same machine and connect each other using a defined port number and the local IP number. If the port number already assigned is taken, try to uncomment one of the port numbers already placed in the code.
+After that, the server creates 1Mb of random data and reads from a file the size of the data that the user wants to transimt (1Mb to 100Mb).
+At this point, the server starts writing using the socket communication. The client process reads.
+In the shell, the time taken to transmit the whole data is shown.
