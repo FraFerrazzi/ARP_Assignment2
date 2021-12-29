@@ -1,7 +1,0 @@
-NAMED PIPE
-
-The program aims to calculate the performance of transmitting data between processes using named pipes.
-The producer creates 1Mb of random data and waits the input from the user (1Mb to 100Mb).
-As soon as the input is given, the producer program spawn the child process doing a fork and execvp. During the spawn, the producer gives to the client the size and producer's pid using the argument list.
-At this point, the parent starts writing in the named pipe. The child process starts reading.
-In the shell, the time taken to transmit the whole data is shown.
