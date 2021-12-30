@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
     gettimeofday(&t_start, NULL);
     time ( &rawtime );
   	timeinfo = localtime ( &rawtime );
-    fprintf(logfile,"\n%sGet time before starting to write on the pipe\n", asctime(timeinfo));
+    fprintf(logfile,"\n%sGet time before starting to write on the socket\n", asctime(timeinfo));
     fflush(logfile);
     // write data from client to server
     time ( &rawtime );
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
 	fflush(stream);
     time ( &rawtime );
   	timeinfo = localtime ( &rawtime );
-    fprintf(logfile,"\n%sTime taken for transferring data with named pipe = %f sec\n\n", asctime(timeinfo), time_taken);
+    fprintf(logfile,"\n%sTime taken for transferring data with socket = %f sec\n\n", asctime(timeinfo), time_taken);
     fflush(logfile);
     fclose(stream);
 
