@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
     }
     time ( &rawtime );
   	timeinfo = localtime ( &rawtime );
-    fprintf(logfile, "%sPRODUCER PROGRAM STARTS:\n", asctime(timeinfo));
+    fprintf(logfile, "%sServer PROGRAM STARTS:\n", asctime(timeinfo));
     fflush(logfile);
     // when signal arrives, sig_handler function is called
     signal(SIGINT, sig_handler);
@@ -162,9 +162,11 @@ int main(int argc, char *argv[])
 	{
         fprintf(logfile,"\n\n%sMB number %d: \n", asctime(timeinfo),i+1);
         fflush(logfile);
+	    //write 1MB data by data
 		for (int j=0; j < MUL_SIZE; j++)
 		{
 			write(newsockfd, &data_array[j], sizeof(data_array[j]));
+			//print one value every 5000
              if (j % 5000 == 0)
             {
                 fprintf(logfile,"[%d]-%d; ", j, data_array[j]);
