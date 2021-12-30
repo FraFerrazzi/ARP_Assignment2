@@ -131,9 +131,11 @@ int main (int argc, char *argv[])
   			timeinfo = localtime ( &rawtime );
 			fprintf(logfileProd,"\n\n%sMB number %d:\n", asctime(timeinfo),i+1);
     		fflush(logfileProd);
+			//write 1MB data by data
 			for (int j=0; j < MUL_SIZE; j++)
 			{
 				write(fd_unnamed[WriteEnd], &data_array[j], sizeof(data_array[j]));
+				//print one value every 5000 on the logfile
 				if( j % 5000 == 0)
 				{
 					fprintf(logfileProd,"[%d]-%d; ", j, data_array[j]);
@@ -185,9 +187,11 @@ int main (int argc, char *argv[])
   			timeinfo = localtime ( &rawtime );
 			fprintf(logfileCons, "\n\n%sMB number %d:\n", asctime(timeinfo),i+1);
 			fflush(logfileCons);
+			//read 1MB data by data
 			for (int j = 0; j < MUL_SIZE; j++)
 			{
 				read(fd_unnamed[ReadEnd], &rd_data_array[j], sizeof(rd_data_array[j]));
+				//print one value every 5000 on the logfile
 				if( j % 5000 == 0)
 				{
 					fprintf(logfileCons,"[%d]-%d; ", j, rd_data_array[j]);
