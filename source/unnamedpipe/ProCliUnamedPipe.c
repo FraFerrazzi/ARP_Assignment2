@@ -178,7 +178,7 @@ int main (int argc, char *argv[])
 		int rd_data_array[MUL_SIZE];
 		time ( &rawtime );
   		timeinfo = localtime ( &rawtime );
-		fprintf(logfileCons, "\n%s,Reading stage:", asctime(timeinfo));
+		fprintf(logfileCons, "\n%sReading stage:", asctime(timeinfo));
 		fflush(logfileCons);
 		for (int i = 0; i < size; i++){
 			time ( &rawtime );
