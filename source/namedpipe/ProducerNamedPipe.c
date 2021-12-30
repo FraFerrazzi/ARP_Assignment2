@@ -174,9 +174,11 @@ int main()
   	    timeinfo = localtime ( &rawtime );
         fprintf(logfile,"\n\n%sMB number %d: \n", asctime(timeinfo), i+1);
         fflush(logfile);
+	    //write 1MB data by data
 		for (int j=0; j < MUL_SIZE; j++)
 		{
 			write(fd_client, &data_array[j], sizeof(data_array[j]));
+			//print one value every 5000 on the logfile
             if (j % 5000 == 0)
             {
                 fprintf(logfile,"[%d]-%d; ", j, data_array[j]);
