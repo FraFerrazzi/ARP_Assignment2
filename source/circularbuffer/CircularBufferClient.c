@@ -105,6 +105,7 @@ int main(int argc, char *argv[])
   	    timeinfo = localtime ( &rawtime );
         fprintf(logfile,"\n\n%sMB number %d: \n", asctime(timeinfo), i+1);
         fflush(logfile);
+	    //read 1MB data by data
 		for (int j=0; j < MUL_SIZE; j++)
 		{  
             // wait until array is empty 
@@ -112,6 +113,7 @@ int main(int argc, char *argv[])
             // wait producer
             sem_wait(sem_id1);
             rd_data_array[j] = addr[out];
+			//print one value every 5000 on the logfile
             if (j % 5000 == 0)
             {
                 fprintf(logfile, "[%d]-%d ", j, rd_data_array[j]);
